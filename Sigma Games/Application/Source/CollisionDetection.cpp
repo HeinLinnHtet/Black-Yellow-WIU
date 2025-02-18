@@ -167,32 +167,61 @@ bool OverlapAABB2Line(const Vector3& boxMin, const Vector3& boxMax, const Vector
 	return true;
 }
 
-bool OverlapCircle2Circle(PhysicsObject& obj1, float r1, PhysicsObject& obj2, float r2, CollisionData& cd)
+bool OverlapSphere2Sphere(PhysicsObject& obj1, float r1, PhysicsObject& obj2, float r2, CollisionData& cd)
 {
-	Vector3 dispVec = (obj1.pos - obj2.pos);
-	if (dispVec.LengthSquared() <= (r1 + r2) * (r1 + r2)) // Check for overlap
+	Vector3 dispVec = obj1.pos - obj2.pos;
+
+	if (dispVec.LengthSquared() <= (r1 + r2) * (r1 + r2))
 	{
-		// Calculate Collision Data
-		cd.pObj1 = &obj1; // Assign collision objects to pointers
+		cd.pObj1 = &obj1;
 		cd.pObj2 = &obj2;
 
-		float len = dispVec.Length();
-		cd.pd = (r1 + r2) - len; // Calculate the amount of overlap
-		cd.normal = dispVec * (1.f / len); // Calculate collision normal
+		float len = std::sqrt(dispVec.LengthSquared());
+		if (len != 0)
+		{
+			cd.pd = (r1 + r2) - len;
+			cd.normal = dispVec * (1.f / len);
+		}
+		else
+		{
+			cd.pd = r1;
+			cd.normal = Vector3(1, 0, 0);
+		}
 
 		return true;
 	}
 	return false;
 }
-bool OverlapCircle2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vector3 Min, Vector3 Max, CollisionData& cd)
+
+
+bool OverlapCircle2Circle(PhysicsObject& obj1, float r1, PhysicsObject& obj2, float r2, CollisionData& cd)
+{
+	Vector3 dispVec = (obj1.pos - obj2.pos);
+	if (dispVec.LengthSquared() <= (r1 + r2) * (r1 + r2))
+	{
+		cd.pObj1 = &obj1;
+		cd.pObj2 = &obj2;
+
+		float len = dispVec.Length();
+		cd.pd = (r1 + r2) - len;
+		cd.normal = dispVec * (1.f / len);
+
+		return true;
+	}
+	return false;
+}
+
+bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vector3 Min, Vector3 Max, CollisionData& cd)
 {
 	Vector3 closestPoint;
 	closestPoint.x = Math::Clamp(obj1.pos.x, Min.x, Max.x);
 	closestPoint.y = Math::Clamp(obj1.pos.y, Min.y, Max.y);
+	closestPoint.z = Math::Clamp(obj1.pos.z, Min.z, Max.z);
 
 	bool insideX = (obj1.pos.x >= Min.x) && (obj1.pos.x <= Max.x);
 	bool insideY = (obj1.pos.y >= Min.y) && (obj1.pos.y <= Max.y);
-	bool isInsideAABB = insideX && insideY;
+	bool insideZ = (obj1.pos.z >= Min.z) && (obj1.pos.z <= Max.z);
+	bool isInsideAABB = insideX && insideY && insideZ;
 
 	Vector3 diff;
 	float distanceSq;
@@ -202,10 +231,13 @@ bool OverlapCircle2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vecto
 		float dxRight = Max.x - obj1.pos.x;
 		float dyBottom = obj1.pos.y - Min.y;
 		float dyTop = Max.y - obj1.pos.y;
+		float dzFront = obj1.pos.z - Min.z;
+		float dzBack = Max.z - obj1.pos.z;
 
 		float minDistX = std::min(dxLeft, dxRight);
 		float minDistY = std::min(dyBottom, dyTop);
-		float minDist = std::min(minDistX, minDistY);
+		float minDistZ = std::min(dzFront, dzBack);
+		float minDist = std::min({ minDistX, minDistY, minDistZ });
 
 		if (minDist >= r) return false;
 
@@ -220,8 +252,14 @@ bool OverlapCircle2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vecto
 		else if (minDist == dyBottom) {
 			cd.normal = Vector3(0, -1, 0);
 		}
-		else {
+		else if (minDist == dyTop) {
 			cd.normal = Vector3(0, 1, 0);
+		}
+		else if (minDist == dzFront) {
+			cd.normal = Vector3(0, 0, -1);
+		}
+		else {
+			cd.normal = Vector3(0, 0, 1);
 		}
 	}
 	else {
@@ -238,6 +276,7 @@ bool OverlapCircle2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vecto
 	cd.pObj2 = &obj2;
 	return true;
 }
+
 
 void ResolveCollision(CollisionData& cd) 
 {
@@ -285,30 +324,34 @@ void ResolveCollision(CollisionData& cd)
 	}
 }
 
-bool OverlapCircle2Line(PhysicsObject& obj1, float radius, const Vector3& lineA, const Vector3& lineB, CollisionData& cd)
+bool OverlapSphere2Line(PhysicsObject& obj1, float radius, const Vector3& lineA, const Vector3& lineB, CollisionData& cd)
 {
-	// Get line segment vectors
 	Vector3 lineDir = lineB - lineA;
-	Vector3 toCircle = obj1.pos - lineA;
+	Vector3 toSphere = obj1.pos - lineA;
 
-	// Project circle's position onto the line segment
-	float t = toCircle.Dot(lineDir) / lineDir.LengthSquared();
+	float t = toSphere.Dot(lineDir) / lineDir.LengthSquared();
 	t = Math::Clamp(t, 0.0f, 1.0f);
 	Vector3 closestPoint = lineA + lineDir * t;
 
-	// Calculate distance from circle to closest point
 	Vector3 diff = obj1.pos - closestPoint;
 	float distanceSq = diff.LengthSquared();
 
 	if (distanceSq > radius * radius) return false;
 
-	// Calculate collision data
 	cd.pObj1 = &obj1;
 	cd.pObj2 = nullptr;
 
 	float distance = std::sqrt(distanceSq);
-	cd.pd = radius - distance;
-	cd.normal = diff * (1.0f / distance);
+	if (distance > 0)
+	{
+		cd.pd = radius - distance;
+		cd.normal = diff * (1.0f / distance);
+	}
+	else
+	{
+		cd.pd = radius;
+		cd.normal = Vector3(1, 0, 0);
+	}
 
 	return true;
 }

@@ -23,7 +23,7 @@ void PhysicsObject::UpdatePhysics(float dt)
 		return;
 
 	//F = MA
-	float invMass = 1.f / mass;
+	invMass = 1.f / mass;
 	Vector3 finalAccel = accel + m_totalForces * invMass;
 
 	//euler integration

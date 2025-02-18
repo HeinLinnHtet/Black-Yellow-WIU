@@ -19,6 +19,8 @@ public:
 	float angularVel; //degrees per second
 	float angleDeg;   //degrees
 
+	float invMass;
+
 	void AddForce(const Vector3& force); //add a pushing force through the center of mass
 	void AddImpulse(const Vector3& impulse);
 	void UpdatePhysics(float dt);
