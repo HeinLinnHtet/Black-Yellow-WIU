@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <map>
 
 #include "LoadOBJ.h"
 
@@ -35,7 +36,6 @@ bool LoadOBJ(
 			glm::vec2 texCoord;
 			sscanf_s((buf + 2), "%f%f", &texCoord.s, &texCoord.t);
 			temp_uvs.push_back(texCoord);
-
 		}
 		else if (strncmp("vn ", buf, 3) == 0) {
 			// process normal
@@ -52,7 +52,6 @@ bool LoadOBJ(
 				&vertexIndex[1], &uvIndex[1], &normalIndex[1],
 				&vertexIndex[2], &uvIndex[2], &normalIndex[2],
 				&vertexIndex[3], &uvIndex[3], &normalIndex[3]);
-
 			// Process faces
 			if (matches == 9) //triangle
 			{
@@ -263,31 +262,27 @@ bool LoadOBJMTL(const char* file_path, const char* mtl_path, std::vector<glm::ve
 		fileStream.getline(buf, 256);
 		if (strncmp("v ", buf, 2) == 0) {
 			// process vertex glm::vec3
-			// refer to lecture on how to do it
 			glm::vec3 vertex;
 			sscanf_s((buf + 2), "%f%f%f", &vertex.x, &vertex.y, &vertex.z);
 			temp_vertices.push_back(vertex);
 		}
 		else if (strncmp("vt ", buf, 3) == 0) {
 			// process texcoord
-			// refer to lecture on how to do it
 			glm::vec2 texCoord;
 			sscanf_s((buf + 2), "%f%f", &texCoord.s, &texCoord.t);
 			temp_uvs.push_back(texCoord);
 		}
 		else if (strncmp("vn ", buf, 3) == 0) {
 			// process normal
-			// refer to lecture on how to do it
 			glm::vec3 normal;
 			sscanf_s((buf + 2), "%f%f%f", &normal.x, &normal.y, &normal.z);
 			temp_normals.push_back(normal);
-
 		}
-		else if (strncmp("mtllib ", buf, 7) == 0) { //process mtllib
-			char mtl_path[256];
-			strcpy_s(mtl_path, buf + 7);
-			LoadMTL(mtl_path, materials_map);
-		}
+		//else if (strncmp("mtllib ", buf, 7) == 0) { //process mtllib
+		//	char mtl_path[256];
+		//	strcpy_s(mtl_path, buf + 7);
+		//	LoadMTL(mtl_path, materials_map);
+		//}
 		else if (strncmp("usemtl ", buf, 7) == 0) {
 			// process usemtl
 			char mtl_name[256];
@@ -311,10 +306,6 @@ bool LoadOBJMTL(const char* file_path, const char* mtl_path, std::vector<glm::ve
 
 			if (matches == 9) //triangle (hint: index 0,1,2)
 			{
-				if (out_materials.size() > 0)
-				{
-					out_materials.back().size += 3;
-				}
 				vertexIndices.push_back(vertexIndex[0]);
 				vertexIndices.push_back(vertexIndex[1]);
 				vertexIndices.push_back(vertexIndex[2]);
@@ -324,13 +315,15 @@ bool LoadOBJMTL(const char* file_path, const char* mtl_path, std::vector<glm::ve
 				normalIndices.push_back(normalIndex[0]);
 				normalIndices.push_back(normalIndex[1]);
 				normalIndices.push_back(normalIndex[2]);
+
+				if (out_materials.size() > 0)
+				{
+					out_materials.back().size += 3;
+				}
+
 			}
 			else if (matches == 12) //quad (hint: index 0,1,2 & 0,2,3)
 			{
-				if (out_materials.size() > 0)
-				{
-					out_materials.back().size += 6;
-				}
 				vertexIndices.push_back(vertexIndex[0]);
 				vertexIndices.push_back(vertexIndex[1]);
 				vertexIndices.push_back(vertexIndex[2]);
@@ -349,6 +342,11 @@ bool LoadOBJMTL(const char* file_path, const char* mtl_path, std::vector<glm::ve
 				normalIndices.push_back(normalIndex[0]);
 				normalIndices.push_back(normalIndex[2]);
 				normalIndices.push_back(normalIndex[3]);
+
+				if (out_materials.size() > 0)
+				{
+					out_materials.back().size += 6;
+				}
 			}
 			else
 			{

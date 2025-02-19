@@ -11,7 +11,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "SceneHorror.h"
+#include "SceneMenu.h"
+#include "SceneBankABall.h"
+
 
 #include "KeyboardController.h"
 #include "MouseController.h"
@@ -139,8 +141,31 @@ void Application::Init()
 void Application::Run()
 {
 	//Main Loop
-	Scene *scene = new SceneHorror();
+	Scene* scene1 = new SceneMenu(); // You decide which scene you want to load
+	Scene* scene2 = new SceneBankABall();
+	Scene* scene = scene2;
 	scene->Init();
+
+	//if (!isEnterUp && KeyboardController::GetInstance() -> IsKeyDown(GLFW_KEY_ENTER)) {
+	//	if (sceneNum == SCENE_BAB) {
+	//		scene1->Exit(); // Ensure you exit previous screen and remove the previous shader
+	//			scene2->Init(); // Initialise the next screen
+	//		scene = scene2;
+	//		sceneNum = SCENE_MENU;
+	//	}
+	//	else if (sceneNum == SCENE_MENU) {
+	//		scene2->Exit();
+	//		scene1->Init();
+	//		scene = scene1;
+	//		sceneNum = SCENE_BAB;
+	//	}
+	//	isEnterUp = true;
+	//}
+	//else if (isEnterUp && KeyboardController::GetInstance() -> IsKeyUp(GLFW_KEY_ENTER))
+	//{
+	//	isEnterUp = false;
+	//}
+
 
 	m_timer.startTimer();    // Start timer to calculate how long it takes to render this frame
 	while (!glfwWindowShouldClose(m_window) && !IsKeyPressed(VK_ESCAPE))
@@ -162,7 +187,8 @@ void Application::Run()
 	MouseController::GetInstance()->UpdateMousePosition(mouse_x, mouse_y);
 
 	scene->Exit();
-	delete scene;
+	delete scene1;
+	delete scene2;
 }
 
 void Application::Exit()

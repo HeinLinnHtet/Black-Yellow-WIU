@@ -11,6 +11,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Common", "Common\Common.vcxproj", "{0348FD56-75FF-4D76-A351-1F415CC2608B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{7FF2F492-DC2D-439E-8BF8-E7AE12417A6E}"
+	ProjectSection(SolutionItems) = preProject
+		Application\Source\SceneBankABall.cpp = Application\Source\SceneBankABall.cpp
+		Application\Source\SceneBankABall.h = Application\Source\SceneBankABall.h
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
