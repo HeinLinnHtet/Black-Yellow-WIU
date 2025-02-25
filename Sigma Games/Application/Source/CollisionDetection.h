@@ -1,11 +1,15 @@
 #pragma once
-
-#include "Vector3.h"
+#include <glm/glm.hpp>
+#include <glm/gtx/norm.hpp>
+#include <glm/gtc/constants.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 #include "PhysicsObject.h"
+#include "MyMath.h"
+#include <iostream>
 
 struct CollisionData {
     float pd;  // Penetration depth
-    Vector3 normal;
+    glm::vec3 normal;
     PhysicsObject* pObj1;
     PhysicsObject* pObj2;
 };
@@ -13,24 +17,17 @@ struct CollisionData {
 // Sphere-Sphere collision
 bool OverlapSphere2Sphere(PhysicsObject& obj1, float r1, PhysicsObject& obj2, float r2, CollisionData& cd);
 
-// AABB-AABB collision
-bool OverlapAABB2AABB(const Vector3& min1, const Vector3& max1,
-    const Vector3& min2, const Vector3& max2);
-
-// Sphere-Line segment collision
-bool OverlapSphere2Line(const Vector3& spherePos, float radius,
-    const Vector3& lineStart, const Vector3& lineEnd);
-
 // Sphere-AABB collision
-bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vector3 Min, Vector3 Max, CollisionData& cd);
+bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, glm::vec3 Min, glm::vec3 Max, CollisionData& cd);
 
-// AABB-Line segment collision (3D)
-bool OverlapAABB2Line(const Vector3& boxMin, const Vector3& boxMax,
-    const Vector3& lineStart, const Vector3& lineEnd);
-
-// Physics resolution functions
-void ResolveSphere2StaticLine(PhysicsObject& sphere, float radius,
-    const Vector3& lineStart, const Vector3& lineEnd);
 void ResolveCollision(CollisionData& cd);
 
-bool OverlapAABB2AABB(PhysicsObject& box1, Vector3 box1min, Vector3 box1max, PhysicsObject& box2, Vector3 box2min, Vector3 box2max, CollisionData& cd);
+bool OverlapAABB2AABB(PhysicsObject& box1, float w1, float h1, float d1, PhysicsObject& box2, float w2, float h2, float d2, CollisionData& cd);
+
+bool OverlapRing2Cube(PhysicsObject& ring, float innerR, float outerR, PhysicsObject& box, glm::vec3 cubeMin, glm::vec3 cubeMax, CollisionData& cd);
+
+bool OverlapRing2Ring(PhysicsObject& ring1, float inner1, float outer1, PhysicsObject& ring2, float inner2, float outer2, CollisionData& cd);
+
+bool OverlapSphere2Plane(PhysicsObject& obj1, float r, PhysicsObject& obj2, glm::vec3 plStart, glm::vec3 plEnd, float width, CollisionData& cd);
+
+bool PointRing2Cube(PhysicsObject& ring, float innerR, float outerR, PhysicsObject& box, glm::vec3 cubeMin, glm::vec3 cubeMax);

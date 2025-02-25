@@ -1,182 +1,17 @@
 #include "CollisionDetection.h"
-
-bool OverlapCircle2Circle(const Vector3& pos1, float r1, const Vector3& pos2, float r2)
-{
-	//TODO: do it yourself
-	if((pos2 - pos1).LengthSquared() <= (r1 + r2) * (r1 + r2))
-	{
-		return true;
-	}
-	return false;
-}
-
-bool OverlapAABB2AABB(const Vector3& min1, const Vector3& max1, const Vector3& min2, const Vector3& max2)
-{
-	//TODO: do it yourself
-	if (max1.x < min2.x or
-		min1.x > max2.x or
-		max1.y < min2.y or
-		min1.y > max2.y)
-	{
-		return false;
-	}
-	return true;
-}
-
-bool OverlapCircle2Line(const Vector3& circlePos, float radius,
-	const Vector3& lineStart, const Vector3& lineEnd)
-{
-	Vector3 lineTangent = lineEnd - lineStart;
-	if (lineTangent.IsZero()) return false;  // Not a line, just a point.
-
-	float lineLength = lineTangent.Length();
-	lineTangent.Normalize();
-
-	// Step 1: Calculate normal to the line (CCW 90-deg rotation)
-	Vector3 lineNormal = Vector3(-lineTangent.y, lineTangent.x, 0);  // Assuming 2D vectors
-
-	// Step 2: Project circle position onto the line's normal to find shortest distance
-	Vector3 toCircle = circlePos - lineStart;
-	float distanceToLine = abs(toCircle.Dot(lineNormal));
-
-	// Step 3: Check if the distance exceeds the circle's radius
-	if (distanceToLine > radius) return false;
-
-	// Step 4: Project circle position onto the line's tangent
-	float projectedDist = toCircle.Dot(lineTangent);
-
-	// Step 5: Check if the projection lies within the line segment
-	if (projectedDist > lineLength) {
-		// a) Outside segment: check distance to lineEnd
-		distanceToLine = (circlePos - lineEnd).Length();
-	}
-	else if (projectedDist < 0) {
-		// b) Outside segment: check distance to lineStart
-		distanceToLine = (circlePos - lineStart).Length();
-	}
-
-	// Step 6: Determine if the distance is within the radius for collision
-	return distanceToLine <= radius;
-}
-
-void ResolveCircle2StaticLine(PhysicsObject& ball, float radius, const Vector3& lineStart, const Vector3& lineEnd)
-{
-	// Calculate line direction (tangent) and normalize
-	Vector3 lineTangent = lineEnd - lineStart;
-	float lineLength = lineTangent.Length();
-	if (lineLength == 0.0f) return; // Degenerate line (single point), no resolution needed.
-	lineTangent.Normalize();
-
-	// Vector from line start to the circle
-	Vector3 toCircle = ball.pos - lineStart;
-
-	// Project the circle's position onto the line's tangent
-	float projectedDist = toCircle.Dot(lineTangent);
-
-	// Determine the closest point on the line to the circle
-	Vector3 closestPoint;
-	if (projectedDist < 0.0f)
-	{
-		// Circle is closest to lineStart
-		closestPoint = lineStart;
-	}
-	else if (projectedDist > lineLength)
-	{
-		// Circle is closest to lineEnd
-		closestPoint = lineEnd;
-	}
-	else
-	{
-		// Circle is within the segment; find the projection
-		closestPoint = lineStart + projectedDist * lineTangent;
-	}
-
-	// Calculate the collision vector from the closest point to the circle's center
-	Vector3 collisionVec = ball.pos - closestPoint;
-	float distance = collisionVec.Length();
-
-	// Check for collision (if distance is less than the radius)
-	if (distance < radius)
-	{
-		// Calculate penetration depth
-		float penetrationDist = radius - distance;
-
-		// Resolve penetration
-		Vector3 normal = collisionVec * (1 / distance); // Normalize collision vector
-		ball.pos += normal * penetrationDist;
-
-		// Resolve velocity
-		ball.vel -= ball.vel.Dot(normal) * normal; // Reflect velocity along the normal
-	}
-}
-//NOTE: consider shifting this to CollisionDetection.cpp so you can reuse the function
-bool OverlapCircle2AABB(Vector3 circlePos, float radius, Vector3 boxMin, Vector3 boxMax)
-{
-	Vector3 nearest{};
-	// 1) Find the nearest point on the AABB to the circle
-	nearest.x = Math::Clamp(circlePos.x, boxMin.x, boxMax.x);
-	nearest.y = Math::Clamp(circlePos.y, boxMin.y, boxMax.y);
-
-	// 2) Calculate the squared distance from the nearest point to the circle center
-	float dx = nearest.x - circlePos.x;
-	float dy = nearest.y - circlePos.y;
-	float distancesquared = dx * dx + dy * dy;
-
-	// 3) Check if the squared distance is less than or equal to the squared radius
-	return distancesquared <= radius * radius;
-}
-bool OverlapAABB2Line(const Vector3& boxMin, const Vector3& boxMax, const Vector3& lineStart, const Vector3& lineEnd)
-{
-	Vector3 lineTangent = lineEnd - lineStart;
-	if (lineTangent.IsZero()) return false;  // Not a line, just a point.
-
-	// Step 1: Check if either endpoint of the line is inside the AABB
-	if (lineStart.x >= boxMin.x && lineStart.x <= boxMax.x &&
-		lineStart.y >= boxMin.y && lineStart.y <= boxMax.y)
-	{
-		return true;  // The line start point is inside the AABB.
-	}
-
-	if (lineEnd.x >= boxMin.x && lineEnd.x <= boxMax.x &&
-		lineEnd.y >= boxMin.y && lineEnd.y <= boxMax.y)
-	{
-		return true;  // The line end point is inside the AABB.
-	}
-
-	// Step 2: Check for X axis intersection
-	if ((lineStart.x < boxMin.x && lineEnd.x < boxMin.x) || (lineStart.x > boxMax.x && lineEnd.x > boxMax.x)) {
-		// No intersection along the X axis
-		return false;
-	}
-	float tXmin = (boxMin.x - lineStart.x) / (lineEnd.x - lineStart.x);
-	float tXmax = (boxMax.x - lineStart.x) / (lineEnd.x - lineStart.x);
-	if (tXmin > tXmax) std::swap(tXmin, tXmax);
-	if (tXmax < 0 || tXmin > 1) return false;  // No intersection along the X axis
-
-	// Step 3: Check for Y axis intersection
-	if ((lineStart.y < boxMin.y && lineEnd.y < boxMin.y) || (lineStart.y > boxMax.y && lineEnd.y > boxMax.y)) {
-		// No intersection along the Y axis
-		return false;
-	}
-	float tYmin = (boxMin.y - lineStart.y) / (lineEnd.y - lineStart.y);
-	float tYmax = (boxMax.y - lineStart.y) / (lineEnd.y - lineStart.y);
-	if (tYmin > tYmax) std::swap(tYmin, tYmax);
-	if (tYmax < 0 || tYmin > 1) return false;  // No intersection along the Y axis
-
-	// If all checks pass, return true (overlap occurs)
-	return true;
-}
-
+#include "MyMath.h"
+#include <iostream>
+using namespace std;
 
 bool OverlapSphere2Sphere(PhysicsObject& obj1, float r1, PhysicsObject& obj2, float r2, CollisionData& cd)
 {
-	Vector3 dispVec = (obj1.pos - obj2.pos);
-	if (dispVec.LengthSquared() <= (r1 + r2) * (r1 + r2))
+	glm::vec3 dispVec = (obj1.pos - obj2.pos);
+	if (glm::length2(dispVec) <= (r1 + r2) * (r1 + r2))
 	{
 		cd.pObj1 = &obj1;
 		cd.pObj2 = &obj2;
 
-		float len = dispVec.Length();
+		float len = glm::length(dispVec);
 		cd.pd = (r1 + r2) - len;
 		cd.normal = dispVec * (1.f / len);
 
@@ -185,9 +20,9 @@ bool OverlapSphere2Sphere(PhysicsObject& obj1, float r1, PhysicsObject& obj2, fl
 	return false;
 }
 
-bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vector3 Min, Vector3 Max, CollisionData& cd)
+bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, glm::vec3 Min, glm::vec3 Max, CollisionData& cd)
 {
-	Vector3 closestPoint;
+	glm::vec3 closestPoint;
 	closestPoint.x = Math::Clamp(obj1.pos.x, Min.x, Max.x);
 	closestPoint.y = Math::Clamp(obj1.pos.y, Min.y, Max.y);
 	closestPoint.z = Math::Clamp(obj1.pos.z, Min.z, Max.z);
@@ -197,155 +32,273 @@ bool OverlapSphere2AABB(PhysicsObject& obj1, float r, PhysicsObject& obj2, Vecto
 	bool insideZ = (obj1.pos.z >= Min.z) && (obj1.pos.z <= Max.z);
 	bool isInsideAABB = insideX && insideY && insideZ;
 
-	Vector3 diff;
+	glm::vec3 diff;
 	float distanceSq;
 
 	if (isInsideAABB) {
-		// Compute the distance from the sphere center to each face
 		float dxLeft = obj1.pos.x - Min.x;
 		float dxRight = Max.x - obj1.pos.x;
 		float dyBottom = obj1.pos.y - Min.y;
 		float dyTop = Max.y - obj1.pos.y;
-		float dzFront = obj1.pos.z - Min.z;
-		float dzBack = Max.z - obj1.pos.z;
+		float dzNear = obj1.pos.z - Min.z;
+		float dzFar = Max.z - obj1.pos.z;
 
-		// Compute penetration depth (smallest distance to a face)
-		float penX = r - std::min(dxLeft, dxRight);
-		float penY = r - std::min(dyBottom, dyTop);
-		float penZ = r - std::min(dzFront, dzBack);
-		float minPen = std::min({ penX, penY, penZ });
+		float minDistX = std::min(dxLeft, dxRight);
+		float minDistY = std::min(dyBottom, dyTop);
+		float minDistZ = std::min(dzNear, dzFar);
+		float minDist = std::min({ minDistX, minDistY, minDistZ });
 
-		if (minPen <= 0) return false;
+		if (minDist >= r) return false;
 
-		cd.pd = minPen;
+		cd.pd = r - minDist;
 
-		// Determine normal direction based on penetration axis
-		if (minPen == penX) {
-			cd.normal = (dxLeft < dxRight) ? Vector3(-1, 0, 0) : Vector3(1, 0, 0);
+		if (minDist == minDistX) {
+			cd.normal = (minDist == dxLeft) ? glm::vec3(-1, 0, 0) : glm::vec3(1, 0, 0);
 		}
-		else if (minPen == penY) {
-			cd.normal = (dyBottom < dyTop) ? Vector3(0, -1, 0) : Vector3(0, 1, 0);
+		else if (minDist == minDistY) {
+			cd.normal = (minDist == dyBottom) ? glm::vec3(0, -1, 0) : glm::vec3(0, 1, 0);
 		}
-		else { // minPen == penZ
-			cd.normal = (dzFront < dzBack) ? Vector3(0, 0, -1) : Vector3(0, 0, 1);
+		else {
+			cd.normal = (minDist == dzNear) ? glm::vec3(0, 0, -1) : glm::vec3(0, 0, 1);
 		}
 	}
 	else {
-		// Sphere is outside AABB, check distance to closest point
 		diff = obj1.pos - closestPoint;
-		distanceSq = diff.LengthSquared();
+		distanceSq = length2(diff);
 		if (distanceSq > r * r) return false;
 
 		float distance = std::sqrt(distanceSq);
 		cd.pd = r - distance;
-		cd.normal = diff * (1.0f / distance);
+		cd.normal = -diff * (1.0f / distance);
 	}
 
-	cd.pObj1 = &obj1;
-	cd.pObj2 = &obj2;
+	if (obj1.mass == 0)
+	{
+		cd.pObj1 = &obj2;
+		cd.pObj2 = &obj1;
+	}
+	else
+	{
+		cd.pObj1 = &obj1;
+		cd.pObj2 = &obj2;
+	}
 	return true;
 }
 
-
-void ResolveCollision(CollisionData& cd) 
+bool OverlapAABB2AABB(PhysicsObject& box1, float w1, float h1, float d1, PhysicsObject& box2, float w2, float h2, float d2, CollisionData& cd)
 {
-	if(cd.pObj2 == nullptr)
-	{
-		PhysicsObject& circle = *cd.pObj1;
-
-		// Resolve penetration
-		circle.pos += cd.normal * cd.pd;
-
-		// Resolve velocity (reflect over normal)
-		float velocityDot = circle.vel.Dot(cd.normal);
-		circle.vel -= 2.0f * velocityDot * cd.normal;
-	}
-	else if(cd.pObj2 != nullptr)
-	{
-
-		PhysicsObject& obj1 = *cd.pObj1;
-		PhysicsObject& obj2 = *cd.pObj2;
-
-		if (obj1.mass > 0 && obj2.mass > 0)
-		{
-			float totalInvMass = 1.f / (obj1.mass + obj2.mass); // Total Inverse Mass
-
-			// Resolve Penetration
-			obj1.pos += obj2.mass * totalInvMass * cd.pd * cd.normal;
-			obj2.pos -= obj1.mass * totalInvMass * cd.pd * cd.normal;
-
-			// Resolve Velocity
-			Vector3 deltaVel = (obj1.vel.Dot(cd.normal) - obj2.vel.Dot(cd.normal)) * cd.normal;
-			obj1.vel -= 2.f * obj2.mass * totalInvMass * deltaVel;
-			obj2.vel += 2.f * obj1.mass * totalInvMass * deltaVel;
-		}
-		else
-		{
-			float totalInvMass = 1.0f / (obj1.mass + 0.0f);
-
-			// Resolve penetration (move circle only)
-			obj1.pos += cd.normal * cd.pd;
-
-			// Resolve velocity (reflect circle's velocity over the normal)
-			float dot = obj1.vel.Dot(cd.normal);
-			obj1.vel -= 2.0f * dot * cd.normal;
-		}
-	}
-}
-
-bool OverlapAABB2AABB(PhysicsObject& box1, Vector3 box1min, Vector3 box1max, PhysicsObject& box2, Vector3 box2min, Vector3 box2max, CollisionData& cd)
-{
-	// Check for overlap along each axis
-	float overlapX = std::min(box1max.x, box2max.x) - std::max(box1min.x, box2min.x);
-	float overlapY = std::min(box1max.y, box2max.y) - std::max(box1min.y, box2min.y);
-	float overlapZ = std::min(box1max.z, box2max.z) - std::max(box1min.z, box2min.z);
-
-	// If there's no overlap in any axis, there's no collision
-	if (overlapX <= 0 || overlapY <= 0 || overlapZ <= 0)
-		return false;
-
-	// Find the smallest penetration depth
-	float minPen = std::min({ overlapX, overlapY, overlapZ });
-	cd.pd = minPen;
-
-	// Determine the normal direction based on the smallest penetration axis
-	if (minPen == overlapX)
-		cd.normal = (box1.pos.x < box2.pos.x) ? Vector3(-1, 0, 0) : Vector3(1, 0, 0);
-	else if (minPen == overlapY)
-		cd.normal = (box1.pos.y < box2.pos.y) ? Vector3(0, -1, 0) : Vector3(0, 1, 0);
-	else
-		cd.normal = (box1.pos.z < box2.pos.z) ? Vector3(0, 0, -1) : Vector3(0, 0, 1);
-
 	cd.pObj1 = &box1;
 	cd.pObj2 = &box2;
-	return true;
+
+	const float halfW1 = w1 * 0.5f;
+	const float halfH1 = h1 * 0.5f;
+	const float halfD1 = d1 * 0.5f;
+
+	const float halfW2 = w2 * 0.5f;
+	const float halfH2 = h2 * 0.5f;
+	const float halfD2 = d2 * 0.5f;
+
+	// Calculate the min and max points for each box in 3D
+	glm::vec3 min1{ box1.pos.x - halfW1, box1.pos.y - halfH1, box1.pos.z - halfD1 };
+	glm::vec3 max1{ box1.pos.x + halfW1, box1.pos.y + halfH1, box1.pos.z + halfD1 };
+	glm::vec3 min2{ box2.pos.x - halfW2, box2.pos.y - halfH2, box2.pos.z - halfD2 };
+	glm::vec3 max2{ box2.pos.x + halfW2, box2.pos.y + halfH2, box2.pos.z + halfD2 };
+
+	// Check for overlap in all three dimensions (x, y, z)
+	if (!(max1.x < min2.x || min1.x > max2.x ||
+		max1.y < min2.y || min1.y > max2.y ||
+		max1.z < min2.z || min1.z > max2.z))
+	{
+		// If there's an overlap, compute the penetration depths along each axis
+		float left = max1.x - min2.x;
+		float right = max2.x - min1.x;
+		float bottom = max1.y - min2.y;
+		float top = max2.y - min1.y;
+		float front = max1.z - min2.z;
+		float back = max2.z - min1.z;
+
+		// Determine the penetration depth and normal
+		float minPenetration = std::min({ left, right, bottom, top, front, back });
+
+		if (minPenetration == left) {
+			cd.normal = glm::vec3(-1, 0, 0);
+		}
+		else if (minPenetration == right) {
+			cd.normal = glm::vec3(1, 0, 0);
+		}
+		else if (minPenetration == bottom) {
+			cd.normal = glm::vec3(0, -1, 0);
+		}
+		else if (minPenetration == top) {
+			cd.normal = glm::vec3(0, 1, 0);
+		}
+		else if (minPenetration == front) {
+			cd.normal = glm::vec3(0, 0, -1);
+		}
+		else {  // minPenetration == back
+			cd.normal = glm::vec3(0, 0, 1);
+		}
+
+		// Set the penetration depth
+		cd.pd = minPenetration;
+
+		return true;  // There is an overlap
+	}
+
+	return false;  // No overlap
 }
 
-bool OverlapSphere2Line(PhysicsObject& obj1, float radius, const Vector3& lineA, const Vector3& lineB, CollisionData& cd)
+bool OverlapRing2Cube(PhysicsObject& ring, float innerR, float outerR, PhysicsObject& box, glm::vec3 cubeMin, glm::vec3 cubeMax, CollisionData& cd)
 {
-	// Get line segment vectors
-	Vector3 lineDir = lineB - lineA;
-	Vector3 toCircle = obj1.pos - lineA;
+	const int ballAmt = 10 * outerR;
+	bool collided = false;
 
-	// Project circle's position onto the line segment
-	float t = toCircle.Dot(lineDir) / lineDir.LengthSquared();
-	t = Math::Clamp(t, 0.0f, 1.0f);
-	Vector3 closestPoint = lineA + lineDir * t;
+	for (int i = 0; i < ballAmt; ++i)
+	{
+		float angle = Math::DegreeToRadian(i * 360.0f / ballAmt);
+		glm::vec3 tempBall = ring.pos + glm::vec3(outerR * cos(angle), 0, outerR * sin(angle));
 
-	// Calculate distance from circle to closest point
-	Vector3 diff = obj1.pos - closestPoint;
-	float distanceSq = diff.LengthSquared();
+		glm::vec3 nearest;
+		nearest.x = glm::clamp(tempBall.x, cubeMin.x, cubeMax.x);
+		nearest.y = glm::clamp(tempBall.y, cubeMin.y, cubeMax.y);
+		nearest.z = glm::clamp(tempBall.z, cubeMin.z, cubeMax.z);
 
-	if (distanceSq > radius * radius) return false;
+		float dx = nearest.x - tempBall.x;
+		float dy = nearest.y - tempBall.y;
+		float dz = nearest.z - tempBall.z;
+		float distancesquared = dx * dx + dy * dy + dz * dz;
 
-	// Calculate collision data
-	cd.pObj1 = &obj1;
-	cd.pObj2 = nullptr;
+		if (distancesquared <= innerR * innerR)
+		{
+			glm::vec3 closestPoint;
+			closestPoint.y = glm::clamp(tempBall.y, cubeMin.y, cubeMax.y);
+			closestPoint.x = glm::clamp(tempBall.x, cubeMin.x, cubeMax.x);
+			closestPoint.z = glm::clamp(tempBall.z, cubeMin.z, cubeMax.z);
 
-	float distance = std::sqrt(distanceSq);
-	cd.pd = radius - distance;
-	cd.normal = diff * (1.0f / distance);
+			glm::vec3 ringToCube = closestPoint - tempBall;
+			float distance = glm::length(ringToCube);
 
-	return true;
+			float penetrationDepth = innerR - distance;
+
+			cd.pd = penetrationDepth;
+			cd.normal = -glm::normalize(ringToCube);
+			collided = true;
+		}
+	}
+
+	if (collided)
+	{
+		//glm::vec3 closestPoint;
+		//closestPoint.x = glm::clamp(ring.pos.x, cubeMin.x, cubeMax.x);
+		//closestPoint.y = glm::clamp(ring.pos.y, cubeMin.y, cubeMax.y);
+		//closestPoint.z = glm::clamp(ring.pos.z, cubeMin.z, cubeMax.z);
+
+		//glm::vec3 ringToCube = closestPoint - ring.pos;
+		//float distance = glm::length(ringToCube);
+
+		//float penetrationDepth = innerR - distance;
+		//
+		//cd.pd = penetrationDepth;
+		//cd.normal = -glm::normalize(ringToCube);
+		cd.pObj1 = &ring;
+		cd.pObj2 = &box;
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
 }
 
+bool OverlapRing2Ring(PhysicsObject& ring1, float inner1, float outer1, PhysicsObject& ring2, float inner2, float outer2, CollisionData& cd)
+{
+	const int ballAmt1 = 10 * outer1;
+	const int ballAmt2 = 10 * outer2;
+	bool collided = false;
+	float distSq = 0;
+
+	glm::vec3 tempBall1;
+	glm::vec3 tempBall2;
+
+	for (int i = 0; i < ballAmt1; ++i)
+	{
+		float angle = Math::DegreeToRadian(i * 360.0f / ballAmt1);
+		tempBall1 = ring1.pos + glm::vec3(outer1 * cos(angle), 0, outer1 * sin(angle));
+
+		for (int j = 0; j < ballAmt2; ++j)
+		{
+			float angle = Math::DegreeToRadian(j * 360.0f / ballAmt2);
+			tempBall2 = ring2.pos + glm::vec3(outer2 * cos(angle), 0, outer2 * sin(angle));
+			glm::vec3 dispVec;
+
+			dispVec = (tempBall1 - tempBall2);
+
+			if (glm::length2(dispVec) <= inner1 + inner2)
+			{
+				collided = true;
+				glm::vec3 ball2ball = tempBall1 - tempBall2;
+				cd.normal = -glm::normalize(ball2ball);
+
+				float distance = glm::length(ball2ball);
+				float penetrationDepth = (inner1 + inner2) - distance;
+				cd.pd = penetrationDepth;
+			}
+		}
+	}
+	if (collided)
+	{
+
+		cd.pObj1 = &ring1;
+		cd.pObj2 = &ring2;
+
+		return true;
+	}
+	else
+		return false;
+}
+
+bool PointRing2Cube(PhysicsObject& ring, float innerR, float outerR, PhysicsObject& box, glm::vec3 cubeMin, glm::vec3 cubeMax)
+{
+
+	glm::vec3 closestPoint;
+	closestPoint.x = glm::clamp(ring.pos.x, cubeMin.x, cubeMax.x);
+	closestPoint.y = ring.pos.y;
+	closestPoint.z = glm::clamp(ring.pos.z, cubeMin.z, cubeMax.z);
+
+	glm::vec3 ringToCube = closestPoint - ring.pos;
+	float distance = glm::length(ringToCube);
+
+	if (outerR - innerR > distance && (ring.pos.y - innerR > cubeMin.y && ring.pos.y + innerR < cubeMax.y))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+
+void ResolveCollision(CollisionData& cd)
+{
+	PhysicsObject& obj1 = *cd.pObj1;
+	PhysicsObject& obj2 = *cd.pObj2;
+
+	float totalInvMass = 1.f / (obj1.mass + obj2.mass);
+	float bounciness = std::min(obj1.bounciness, obj2.bounciness);
+	glm::vec3 deltaVel;
+
+	deltaVel = (glm::dot(obj1.vel, cd.normal) - glm::dot(obj2.vel, cd.normal)) * cd.normal;
+
+	//Resolve velocity 
+	if (obj1.mass > 0 && obj2.mass == 0) {
+		obj1.pos += cd.pd * cd.normal;
+		obj1.vel -= (bounciness + 1) * deltaVel;
+	}
+	else {
+		obj1.pos += obj2.mass * totalInvMass * cd.pd * cd.normal;
+		obj2.pos -= obj1.mass * totalInvMass * cd.pd * cd.normal;
+		obj1.vel -= (bounciness + 1) * obj2.mass * totalInvMass * deltaVel;
+		obj2.vel += (bounciness + 1) * obj1.mass * totalInvMass * deltaVel;
+	}
+}
