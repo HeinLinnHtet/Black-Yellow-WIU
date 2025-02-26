@@ -104,7 +104,7 @@ void SceneMenu::Init()
 	meshList[GEO_BACK] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
 	meshList[GEO_BACK]->textureID = LoadTGA("Images//circus_skybox.tga");
 	meshList[GEO_GROUND] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_GROUND]->textureID = LoadTGA("Images//skybox_bottom.tga");
+	meshList[GEO_GROUND]->textureID = LoadTGA("Images//floor_rt.tga");
 	meshList[GEO_DOOR] = MeshBuilder::GenerateOBJMTL("door", "Models//door.obj", "Models//door.mtl");
 	meshList[GEO_DOOR]->textureID = LoadTGA("Images//Door_albedo.tga");
 
@@ -201,10 +201,10 @@ void SceneMenu::Init()
 
 
 	ringtossball.dimension = glm::vec3(4, 4, 4);
-	ringtossball.pos = glm::vec3(2, 1, 3);
+	ringtossball.pos = glm::vec3(5, 1, 3);
 
 	prizedoor.dimension = glm::vec3(4, 4, 4);
-	prizedoor.pos = glm::vec3(2, 1, -3);
+	prizedoor.pos = glm::vec3(5, 1, -3);
 
 	 interactionTriggered = false;
 }
@@ -309,14 +309,14 @@ void SceneMenu::Render()
 
 	//front
 	modelStack.PushMatrix();
-	modelStack.Translate(0.f, 50.f, -50.f);
+	modelStack.Translate(0.f, 35, -50.f);
 	RenderMesh(meshList[GEO_FRONT], false);
 	modelStack.PopMatrix();
 
 
 	//back
 	modelStack.PushMatrix();
-	modelStack.Translate(0.f, 50.f, 50.f);
+	modelStack.Translate(0.f, 35, 50.f);
 	modelStack.Rotate(180, 0.f, 1.f, 0.f);
 	RenderMesh(meshList[GEO_BACK], false);
 	modelStack.PopMatrix();
@@ -324,7 +324,7 @@ void SceneMenu::Render()
 
 	//roof
 	modelStack.PushMatrix();
-	modelStack.Translate(0.f, 100.f, 0.f);
+	modelStack.Translate(0.f, 75, 0.f);
 	modelStack.Rotate(90, 1.f, 0.f, 0.f);
 	
 	RenderMesh(meshList[GEO_TOP], false);
@@ -333,7 +333,7 @@ void SceneMenu::Render()
 	
 	//left wall
 	modelStack.PushMatrix();
-	modelStack.Translate(-50.f, 50.f, 0.f);
+	modelStack.Translate(-50.f, 35, 0.f);
 	modelStack.Rotate(90, 0.f, 1.f, 0.f);
 	RenderMesh(meshList[GEO_LEFT], false);
 	modelStack.PopMatrix();
@@ -341,7 +341,7 @@ void SceneMenu::Render()
 
 	//right 
 	modelStack.PushMatrix();
-	modelStack.Translate(50.f, 50.f, 0.f);
+	modelStack.Translate(50.f, 35, 0.f);
 	modelStack.Rotate(-90, 0.f, 1.f, 0.f);
 	RenderMesh(meshList[GEO_RIGHT], false);
 	modelStack.PopMatrix();
@@ -427,13 +427,13 @@ void SceneMenu::Render()
 
 	
 	modelStack.PushMatrix();
-	modelStack.Translate(7, 10, -10);
+	modelStack.Translate(18, 10, -10);
 	modelStack.Rotate(90, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Prize Counter", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 	modelStack.PushMatrix();
-	modelStack.Translate(7, 10, 18);
+	modelStack.Translate(18, 10, 18);
 	modelStack.Rotate(90, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Ring Toss Game", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
