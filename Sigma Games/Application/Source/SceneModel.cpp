@@ -95,17 +95,17 @@ void SceneModel::Init()
 	meshList[GEO_AXES] = MeshBuilder::GenerateAxes("Axes", 10000.f, 10000.f, 10000.f);
 
 
+
 	meshList[GEO_LEFT] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_LEFT]->textureID = LoadTGA("Images//wall1_Albedo.tga");
+	meshList[GEO_LEFT]->textureID = LoadTGA("Images//circus_skybox.tga");
 	meshList[GEO_RIGHT] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_CUBE] = MeshBuilder::GenerateCube("cube", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_RIGHT]->textureID = LoadTGA("Images//wall2_Albedo.tga");
+	meshList[GEO_RIGHT]->textureID = LoadTGA("Images//circus_skybox.tga");
 	meshList[GEO_TOP] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_TOP]->textureID = LoadTGA("Images//wall3_Albedo.tga");
+	meshList[GEO_TOP]->textureID = LoadTGA("Images//tenttop.tga");
 	meshList[GEO_FRONT] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_FRONT]->textureID = LoadTGA("Images//wall4_Albedo.tga");
+	meshList[GEO_FRONT]->textureID = LoadTGA("Images//circus_skybox.tga");
 	meshList[GEO_BACK] = MeshBuilder::GenerateQuad("Plane", glm::vec3(1.f, 1.f, 1.f), 100.f);
-	meshList[GEO_BACK]->textureID = LoadTGA("Images//wall5_Albedo.tga");
+	meshList[GEO_BACK]->textureID = LoadTGA("Images//circus_skybox.tga");
 	meshList[GEO_GROUND] = MeshBuilder::GenerateOBJMTL("ground", "Models//ground.obj", "Models//ground.mtl");
 	meshList[GEO_GROUND]->textureID = LoadTGA("Images//ground.tga");
 	meshList[GEO_FUTBALL] = MeshBuilder::GenerateOBJMTL("soccer", "Models//soccer.obj", "Models//soccer.mtl");
