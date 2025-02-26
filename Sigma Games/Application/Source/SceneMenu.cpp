@@ -191,20 +191,20 @@ void SceneMenu::Init()
 	
 	playcam.radius = 5;
 	door.dimension = glm::vec3{ 4,4,4 };
-	door.pos = glm::vec3{2,1,0};
+	door.pos = glm::vec3{12,1,10};
 
 	dartsdoor.dimension = glm::vec3{4,4,4};
-	dartsdoor.pos = glm::vec3(2,1, -7);
+	dartsdoor.pos = glm::vec3(12,1, -10);
 
 	bankaball.dimension = glm::vec3(4, 4, 4);
-	bankaball.pos = glm::vec3(2, 1, 7);
+	bankaball.pos = glm::vec3(-12, 1, 10);
 
 
 	ringtossball.dimension = glm::vec3(4, 4, 4);
-	ringtossball.pos = glm::vec3(5, 1, 3);
+	ringtossball.pos = glm::vec3(-12, 1, -10);
 
 	prizedoor.dimension = glm::vec3(4, 4, 4);
-	prizedoor.pos = glm::vec3(5, 1, -3);
+	prizedoor.pos = glm::vec3(0, 1, 0);
 
 	 interactionTriggered = false;
 }
@@ -427,73 +427,75 @@ void SceneMenu::Render()
 
 	
 	modelStack.PushMatrix();
-	modelStack.Translate(18, 10, -10);
+	modelStack.Translate(0, 10,3);
 	modelStack.Rotate(90, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Prize Counter", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 	modelStack.PushMatrix();
-	modelStack.Translate(18, 10, 18);
+	modelStack.Translate(-45, 10, -35);
 	modelStack.Rotate(90, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Ring Toss Game", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 	modelStack.PushMatrix();
-	modelStack.Translate(7, 10, 35);
+	modelStack.Translate(-45, 10, 40 );
 	modelStack.Rotate(90, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Bank A Ball Game", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 	modelStack.PushMatrix();
-	modelStack.Translate(7, 10, 4);
-	modelStack.Rotate(90, 0, 1, 0);
+	modelStack.Translate(45, 10, 35);
+	modelStack.Rotate(270, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Penalty Game", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 
 	modelStack.PushMatrix();
-	modelStack.Translate(7, 10, -25);
-	modelStack.Rotate(90, 0, 1, 0);
+	modelStack.Translate(45, 10, -35);
+	modelStack.Rotate(270, 0, 1, 0);
 	RenderText(meshList[GEO_TEXT], "Dart Game", glm::vec3(0, 1, 0));
 	modelStack.PopMatrix();
 
 
 	// No transform needed
-	if (isLooking(camera, door.pos, 10) && glm::distance(camera.position, door.pos) < 15)
-	{
-		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter: ", glm::vec3(0, 1, 0), 30, 15, 100);
-		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
-			SceneManager::GetInstance().ChangeState(new SceneModel);
-		}
-	}
-	 else if (isLooking(camera, ringtossball.pos, 10) && glm::distance(camera.position, ringtossball.pos) < 15)
+	if (isLooking(camera, door.pos, 20)) /*&& glm::distance(camera.position, door.pos) < 5)*/
 	{
 		std::cout << "hello";
-		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter: ", glm::vec3(0, 1, 0), 30, 15, 100);
+		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter PG: ", glm::vec3(0, 1, 0), 30, 15, 100);
 		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
 			SceneManager::GetInstance().ChangeState(new SceneModel);
 		}
 	}
-	else if ( isLooking(camera, prizedoor.pos, 10) && glm::distance(camera.position, prizedoor.pos) < 15)
+	 else if (isLooking(camera, ringtossball.pos, 20)/* && glm::distance(camera.position, ringtossball.pos) < 5*/)
 	{
 
-		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter: ", glm::vec3(0, 1, 0), 30, 15, 100);
+		std::cout << "hello2";
+		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter RT: ", glm::vec3(0, 1, 0), 30, 15, 100);
 		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
 			SceneManager::GetInstance().ChangeState(new SceneModel);
 		}
 	}
-	else if (isLooking(camera, bankaball.pos, 10) && glm::distance(camera.position, bankaball.pos) < 15)
+	else if ( isLooking(camera, prizedoor.pos, 20) /*&& glm::distance(camera.position, prizedoor.pos) < 5*/)
 	{
-
-		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter: ", glm::vec3(0, 1, 0), 30, 15, 100);
+		std::cout << "hello3";
+		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter Prize Room: ", glm::vec3(0, 1, 0), 30, 15, 100);
 		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
 			SceneManager::GetInstance().ChangeState(new SceneModel);
 		}
 	}
-	else if (isLooking(camera, dartsdoor.pos, 10) && glm::distance(camera.position, dartsdoor.pos) < 15)
+	else if (isLooking(camera, bankaball.pos, 20)/* && glm::distance(camera.position, bankaball.pos) < 5*/)
 	{
-
-		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter: ", glm::vec3(0, 1, 0), 30, 15, 100);
+		std::cout << "hello4";
+		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter BB: ", glm::vec3(0, 1, 0), 30, 15, 100);
+		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
+			SceneManager::GetInstance().ChangeState(new SceneModel);
+		}
+	}
+	else if (isLooking(camera, dartsdoor.pos, 20)/* && glm::distance(camera.position, dartsdoor.pos) < 5*/)
+	{
+		std::cout << "hello5";
+		RenderTextOnScreen(meshList[GEO_TEXT], "Press Q to enter DD: ", glm::vec3(0, 1, 0), 30, 15, 100);
 		if (KeyboardController::GetInstance()->IsKeyDown('Q')) {
 			SceneManager::GetInstance().ChangeState(new SceneModel);
 		}
