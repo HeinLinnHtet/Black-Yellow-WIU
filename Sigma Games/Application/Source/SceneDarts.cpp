@@ -145,6 +145,8 @@ void SceneDarts::Init()
 	meshList[GEO_BACK] = MeshBuilder::GenerateQuad("Back", glm::vec3(0.4f, 0.4f, 0.4f), 100.f);
 	meshList[GEO_BACK]->textureID = LoadTGA("Images//redstrip_texture.tga");
 
+	meshList[GEO_DIFFICULTY] = MeshBuilder::GenerateQuad("Diffy", glm::vec3(1, 1, 1), 100.f);
+
 	meshList[GEO_PLANE] = MeshBuilder::GenerateQuad("Pause", glm::vec3(1, 1, 1), 100.f);
 	meshList[GEO_PLANE]->textureID = LoadTGA("Images//pausescreen.tga");
 
@@ -274,6 +276,25 @@ void SceneDarts::Update(double dt)
 
 	if (!gamepaused)
 	{
+		if (!difficultychosen)
+		{
+			if (KeyboardController::GetInstance()->IsKeyPressed('1'))
+			{
+				difficulty = 1;
+				difficultychosen = true;
+			}
+			else if (KeyboardController::GetInstance()->IsKeyPressed('2'))
+			{
+				difficulty = 1.5;
+				difficultychosen = true;
+			}
+			else if (KeyboardController::GetInstance()->IsKeyPressed('3'))
+			{
+				difficulty = 2.5;
+				difficultychosen = true;
+			}
+		}
+
 		glm::vec3 oldpos = dart.pos;
 		static float gravity = -10;
 
@@ -317,7 +338,7 @@ void SceneDarts::Update(double dt)
 			{
 				if (MouseController::GetInstance()->IsButtonDown(0))
 				{
-					chargeup += 0.05;
+					chargeup += (difficulty * difficulty) * 0.05;
 					charging = true;
 				}
 				else
@@ -667,6 +688,33 @@ void SceneDarts::Render()
 	{
 		modelStack.PushMatrix();
 		RenderMeshOnScreen(meshList[GEO_PLANE], 400, 280, 12, 6.75);
+		modelStack.PopMatrix();
+	}
+
+	if (!difficultychosen)
+	{
+		modelStack.PushMatrix();
+		RenderMeshOnScreen(meshList[GEO_DIFFICULTY], 400, 280, 12, 6.75);
+		modelStack.PopMatrix();
+
+		modelStack.PushMatrix();
+		//scale, translate, rotate
+		RenderTextOnScreen(meshList[GEO_TEXT], "Select your difficulty", glm::vec3(0, 0, 0), 30, 90, 500);
+		modelStack.PopMatrix();
+
+		modelStack.PushMatrix();
+		//scale, translate, rotate
+		RenderTextOnScreen(meshList[GEO_TEXT], "1 : EASY", glm::vec3(0, 0, 0), 30, 120, 440);
+		modelStack.PopMatrix();
+
+		modelStack.PushMatrix();
+		//scale, translate, rotate
+		RenderTextOnScreen(meshList[GEO_TEXT], "2 : NORMAL", glm::vec3(0, 0, 0), 30, 120, 380);
+		modelStack.PopMatrix();
+
+		modelStack.PushMatrix();
+		//scale, translate, rotate
+		RenderTextOnScreen(meshList[GEO_TEXT], "3 : DIFFICULT", glm::vec3(0, 0, 0), 30, 120, 320);
 		modelStack.PopMatrix();
 	}
 }

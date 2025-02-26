@@ -58,6 +58,7 @@ public:
 		GEO_BACK,
 		GEO_SPHERE,
 		GEO_CUBE,
+		GEO_DIFFICULTY,
 		GEO_PLANE,
 		GEO_WIN,
 
@@ -178,10 +179,14 @@ private:
 	//Remove later
 	int buynumber = 0;
 
+	float difficulty = 1;
+
 	float chargeup = 0;
 	bool charging = false;
 
 	int dartcount = 3;
+
+	bool difficultychosen = false;
 
 	dart dart;
 };
